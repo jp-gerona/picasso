@@ -1,0 +1,10 @@
+{
+  "lastChangelogVersion": "0.84.1",
+  "theme": "dark",
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-4.1",
+  "packages": [
+    "extensions/logo-switcher.ts"
+  ],
+  "tuiMode": "regular"
+}
