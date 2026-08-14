@@ -20,6 +20,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { assess } from "../bash-guard/index.ts";
+import { render } from "../../skills/git-messages/render.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 // ---------------------------------------------------------------------------
@@ -87,9 +88,23 @@ export interface GateOutcome {
   reason?: string;
 }
 
-// Stage 5 replaces this with the real template system.
-function buildPrBody(branch: string): string {
-  return `Automated PR for branch ${branch}.\n\n(placeholder body - template system lands in stage 5)`;
+/**
+ * PR body via the git-messages template system (skills/git-messages).
+ * Every field comes from data the gate actually observed: the branch's real
+ * commits and diff stat, and the checks it just ran. Empty fields become
+ * explicit "none" lines inside render(), never omitted sections.
+ */
+async function buildPrBody(opts: GateOptions, passedChecks: string[]): Promise<string> {
+  const commits = await guardedExec("git log origin/main..HEAD --format='- %s'", opts);
+  const stat = await guardedExec("git diff --stat origin/main...HEAD", opts);
+  const subjects = commits !== "aborted" && commits.code === 0 ? commits.stdout.trim() : "";
+  const diffStat = stat !== "aborted" && stat.code === 0 ? stat.stdout.trim() : "";
+  return render("pr", {
+    summary: `Branch \`${opts.branch}\`, verified by push-gate before leaving the machine.`,
+    changes: [subjects, diffStat ? "```\n" + diffStat + "\n```" : ""].filter(Boolean).join("\n\n"),
+    verification: passedChecks.map((c) => `- \`${c}\` - exit 0`).join("\n"),
+    risk: undefined, // gate has no risk evidence; render() states "None identified."
+  });
 }
 
 async function guardedExec(cmd: string, opts: GateOptions): Promise<ExecResult | "aborted"> {
@@ -161,7 +176,7 @@ export async function runGate(opts: GateOptions): Promise<GateOutcome> {
 
   const subject = await guardedExec("git log -1 --format=%s", opts);
   const title = subject !== "aborted" && subject.code === 0 ? subject.stdout.trim() : branch;
-  const body = buildPrBody(branch);
+  const body = await buildPrBody(opts, checks);
   const pr = await guardedExec(
     `gh pr create --head ${branch} --title ${JSON.stringify(title)} --body ${JSON.stringify(body)}`,
     opts,

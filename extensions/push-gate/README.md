@@ -13,8 +13,9 @@ verification commands all pass.
 3. Runs each command in order. First non-zero exit stops the gate: nothing is
    pushed, and the report names the exact failing command, its exit code, and the
    tail of its output.
-4. All green: `git push -u origin <branch>`, then `gh pr create`. PR body is a
-   placeholder until the stage-5 template system replaces `buildPrBody()`.
+4. All green: `git push -u origin <branch>`, then `gh pr create`. The PR body is
+   rendered by the git-messages template system (`skills/git-messages`) from the
+   branch's real commits, diff stat, and the checks the gate just ran.
 
 ## bash-guard integration
 
