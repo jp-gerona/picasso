@@ -1,0 +1,5 @@
+{{type}}: {{summary}}
+
+{{body}}
+
+{{footer}}
