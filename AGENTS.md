@@ -17,6 +17,7 @@ Standing rules for every agent session, regardless of task or project.
 
 - `node --experimental-strip-types tests/bash-guard.test.ts`
 - `node --experimental-strip-types tests/git-messages.test.ts`
+- `node --experimental-strip-types tests/v0-check.test.ts`
 
 ## Skills and Extensions
 
