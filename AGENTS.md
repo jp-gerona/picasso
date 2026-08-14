@@ -16,7 +16,6 @@ Standing rules for every agent session, regardless of task or project.
 ## Verification
 
 - `node --experimental-strip-types tests/bash-guard.test.ts`
-- `node --experimental-strip-types tests/demo.test.ts`
 
 ## Skills and Extensions
 
