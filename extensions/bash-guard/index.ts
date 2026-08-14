@@ -303,10 +303,22 @@ export default function (pi: ExtensionAPI) {
       };
     }
 
-    const ok = await ctx.ui.confirm(
-      `bash-guard: ${finding.category}`,
-      `${finding.reason}\n\n${command}\n\nRun this command?`,
-    );
+    // Pause the working spinner while the dialog is open. In regular TUI mode
+    // the spinner re-renders every ~80ms, and each repaint writes to the
+    // terminal and snaps the view back to the bottom, so the user cannot
+    // scroll up to review the command. Empty frames stop the animation.
+    ctx.ui.setWorkingIndicator({ frames: [] });
+    let ok: boolean;
+    try {
+      ok = await ctx.ui.confirm(
+        `bash-guard: ${finding.category}`,
+        `${finding.reason}\n\n${command}\n\nRun this command?`,
+      );
+    } finally {
+      // Restore the default animated spinner for the rest of the turn.
+      ctx.ui.setWorkingIndicator();
+    }
+
     if (ok) return undefined;
 
     declined.set(command, Date.now());
