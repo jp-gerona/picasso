@@ -16,23 +16,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { buildChildArgs, type AgentConfig } from "./args.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const AGENTS_DIR = path.join(HERE, "agents");
-const BASH_GUARD = path.join(HERE, "..", "bash-guard", "index.ts");
 
 const MAX_CONCURRENCY = 4;
 const TASK_TIMEOUT_MS = 10 * 60 * 1000;
-
-interface AgentConfig {
-  name: string;
-  description: string;
-  /** "provider/model-id" pattern passed to pi --model. */
-  model: string;
-  /** Tool allowlist passed to pi --tools. */
-  tools: string[];
-  systemPrompt: string;
-}
 
 function loadAgentConfigs(): Map<string, AgentConfig> {
   const configs = new Map<string, AgentConfig>();
@@ -66,26 +56,9 @@ async function runOne(
   task: string,
   cwd: string,
   signal: AbortSignal | undefined,
+  model?: string,
 ): Promise<TaskResult> {
-  const args = [
-    "-p",
-    "--mode",
-    "text",
-    "--no-session",
-    "--no-context-files",
-    "--no-skills",
-    "--no-prompt-templates",
-    "--no-extensions",
-    "-e",
-    BASH_GUARD,
-    "--model",
-    agent.model,
-    "--tools",
-    agent.tools.join(","),
-    "--system-prompt",
-    agent.systemPrompt,
-    task,
-  ];
+  const args = buildChildArgs(agent, task, model);
   try {
     const result = await pi.exec("pi", args, { cwd, signal, timeout: TASK_TIMEOUT_MS });
     const output = (result.stdout + (result.stderr ? `\n[stderr]\n${result.stderr}` : "")).trim();
@@ -119,26 +92,33 @@ export default function (pi: ExtensionAPI) {
       "Dispatch tasks to isolated child Pi agents. Each child starts with zero context " +
       "from this session, so every task string must be fully self-contained (absolute " +
       "paths, complete instructions, success criteria). Single task: set agent+task. " +
-      `Parallel: set tasks (max concurrency ${MAX_CONCURRENCY}). Agents: ${agentList || "(none configured)"}`,
+      `Parallel: set tasks (max concurrency ${MAX_CONCURRENCY}). Agents: ${agentList || "(none configured)"}. ` +
+      "Route by model (cheapest capable model for the task): opencode-go/deepseek-v4-flash " +
+      "or opencode-go/gpt-5.6-luna for mechanical work, opencode-go/deepseek-v4-pro for " +
+      "standard work, opencode-go/kimi-k2.7-code or opencode-go/kimi-k3 for complex/" +
+      "multifile work, opencode-go/qwen3.8-max for the hardest work and final reviews. " +
+      "Omitted model uses the agent's configured default.",
     parameters: Type.Object({
       agent: Type.Optional(Type.String({ description: "Agent name for single-task mode" })),
       task: Type.Optional(Type.String({ description: "Task for single-task mode" })),
+      model: Type.Optional(Type.String({ description: "Optional model override (provider/model-id) for single-task mode" })),
       tasks: Type.Optional(
         Type.Array(
           Type.Object({
             agent: Type.String(),
             task: Type.String(),
+            model: Type.Optional(Type.String({ description: "Optional model override (provider/model-id) for this task" })),
           }),
           { description: "Independent tasks for parallel mode" },
         ),
       ),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
-      const jobs: Array<{ agent: string; task: string }> =
+      const jobs: Array<{ agent: string; task: string; model?: string }> =
         params.tasks && params.tasks.length > 0
           ? params.tasks
           : params.agent && params.task
-            ? [{ agent: params.agent, task: params.task }]
+            ? [{ agent: params.agent, task: params.task, model: params.model }]
             : [];
       if (jobs.length === 0) {
         return {
@@ -162,7 +142,7 @@ export default function (pi: ExtensionAPI) {
 
       let done = 0;
       const results = await runPool(jobs, MAX_CONCURRENCY, async (job) => {
-        const r = await runOne(pi, agents.get(job.agent)!, job.task, ctx.cwd, signal);
+        const r = await runOne(pi, agents.get(job.agent)!, job.task, ctx.cwd, signal, job.model);
         done++;
         onUpdate?.({ content: [{ type: "text", text: `${done}/${jobs.length} finished` }] });
         return r;
