@@ -1,13 +1,14 @@
 {
-  "lastChangelogVersion": "0.84.1",
+  "lastChangelogVersion": "0.84.2",
   "theme": "dark",
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-fable-5",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "qwen3.8-max",
   "packages": [
     "extensions/bash-guard/index.ts",
     "extensions/subagents/index.ts",
-    "extensions/push-gate/index.ts"
+    "extensions/push-gate/index.ts",
+    "git:github.com/obra/superpowers"
   ],
   "tuiMode": "regular",
-  "defaultThinkingLevel": "minimal"
+  "defaultThinkingLevel": "high"
 }
