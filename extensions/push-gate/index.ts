@@ -16,6 +16,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -123,6 +124,11 @@ async function guardedExec(cmd: string, opts: GateOptions): Promise<ExecResult |
   return opts.exec(cmd, opts.cwd);
 }
 
+/** Single-quote a string for bash: safe against backticks, $(), quotes. */
+function shq(s: string): string {
+  return `'${s.replace(/'/g, `'\\''`)}'`;
+}
+
 function tail(text: string, lines = 15): string {
   return text.trim().split("\n").slice(-lines).join("\n");
 }
@@ -177,10 +183,15 @@ export async function runGate(opts: GateOptions): Promise<GateOutcome> {
   const subject = await guardedExec("git log -1 --format=%s", opts);
   const title = subject !== "aborted" && subject.code === 0 ? subject.stdout.trim() : branch;
   const body = await buildPrBody(opts, checks);
+  // Body and title never pass through shell interpolation: backticks or $()
+  // in generated text would otherwise be executed as command substitution.
+  const bodyFile = path.join(os.tmpdir(), `push-gate-pr-body-${process.pid}.md`);
+  fs.writeFileSync(bodyFile, body);
   const pr = await guardedExec(
-    `gh pr create --head ${branch} --title ${JSON.stringify(title)} --body ${JSON.stringify(body)}`,
+    `gh pr create --head ${shq(branch)} --title ${shq(title)} --body-file ${shq(bodyFile)}`,
     opts,
   );
+  fs.rmSync(bodyFile, { force: true });
   if (pr === "aborted") return { ok: false, reason: "guard aborted at PR creation" };
   if (pr.code !== 0) return { ok: false, reason: `pushed, but gh pr create failed:\n${tail(pr.stderr)}` };
 
