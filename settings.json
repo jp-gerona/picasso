@@ -1,10 +1,12 @@
 {
   "lastChangelogVersion": "0.84.1",
   "theme": "dark",
-  "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-4.1",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-fable-5",
   "packages": [
-    "extensions/logo-switcher.ts"
+    "extensions/bash-guard/index.ts",
+    "extensions/subagents/index.ts"
   ],
-  "tuiMode": "regular"
+  "tuiMode": "regular",
+  "defaultThinkingLevel": "minimal"
 }
