@@ -17,6 +17,10 @@ invented content, never skipped sections.
 3. Dash, not em dash, in all generated prose - no exceptions. Check the finished
    text for `—` before using it; this is exactly where em dashes sneak back in.
 4. No agent co-author lines, ever.
+5. Generated text never passes through shell interpolation. Backticks or $() in a
+   commit message or PR body will execute as command substitution if placed on a
+   command line. Write the text to a file and use `git commit -F`, `gh pr create
+   --body-file`, or `gh issue create --body-file`.
 
 ## Commit messages - `templates/commit.md`
 

@@ -45,3 +45,16 @@ Starter agents:
 | review | read, grep | review a diff against stated criteria, no write access |
 
 Add a new agent by dropping another `.json` in `agents/` and reloading.
+
+## Model availability
+
+Probe a model before wiring it into a config - auth that looks configured can
+still fail (provider `not_ready`, exhausted credits, plan-restricted models that
+400 only at request time):
+
+```
+pi -p --no-session --no-tools --model <provider/model> "Reply with exactly: ok"
+```
+
+A config pointing at a dead model fails every dispatch at runtime with a provider
+error, not at load time.
