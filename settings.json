@@ -5,7 +5,8 @@
   "defaultModel": "claude-fable-5",
   "packages": [
     "extensions/bash-guard/index.ts",
-    "extensions/subagents/index.ts"
+    "extensions/subagents/index.ts",
+    "extensions/push-gate/index.ts"
   ],
   "tuiMode": "regular",
   "defaultThinkingLevel": "minimal"

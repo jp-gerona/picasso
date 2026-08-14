@@ -13,6 +13,11 @@ Standing rules for every agent session, regardless of task or project.
 - Never hand-edit auto-generated files (e.g. CHANGELOG.md). Fix the generator or its input, not the output.
 - If you notice a lint failure or flaky test while working on something else, fix it - don't leave it because it wasn't the assigned task.
 
+## Verification
+
+- `node --experimental-strip-types tests/bash-guard.test.ts`
+- `node --experimental-strip-types tests/demo.test.ts`
+
 ## Skills and Extensions
 
 Anything not covered above lives in `skills/` and `extensions/` - this file states standing rules, it does not enumerate capabilities.
