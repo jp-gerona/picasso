@@ -1,0 +1,46 @@
+# {{PROJECT_NAME}} - project agent guidelines
+
+This file extends the harness-wide rules in `~/.pi/agent/AGENTS.md`. Those rules
+always apply and are never repeated here - this file only adds what is specific to
+this project. Harness capabilities (bash-guard, push-gate, subagents, skills) come
+from `~/.pi/agent/extensions/` and `~/.pi/agent/skills/` and stay general; this file
+is where per-project detail belongs.
+
+## Project
+
+{{ONE_PARAGRAPH: what this project is, the stack, and the repo layout in 2-4
+sentences. Enough for an agent with zero prior context to orient.}}
+
+## Commands
+
+- Test: `{{TEST_COMMAND}}`
+- Lint: `{{LINT_COMMAND}}`
+- Build: `{{BUILD_COMMAND}}`
+{{OPTIONAL: other daily commands - dev server, db reset, e2e - one bullet each.}}
+
+## Verification
+
+The push gate runs every command in this section and pushes only if all pass.
+Keep them fast, deterministic, and runnable from the repo root.
+
+- `{{TEST_COMMAND}}`
+- `{{LINT_COMMAND}}`
+- `{{BUILD_COMMAND_IF_IT_VALIDATES: include the build only if a broken build should
+  block a push; delete this bullet otherwise.}}`
+
+## Guard rules (bash-guard / push-gate)
+
+Stack-specific commands beyond the harness-wide risk list:
+
+- Never run: {{COMMANDS_THAT_MUST_NEVER_RUN: e.g. destructive db resets against
+  anything but local, migration rollbacks in shared envs. "None" if none.}}
+- Confirm first: {{COMMANDS_NEEDING_A_PROMPT: e.g. schema migrations, seeders,
+  deploy scripts. "None" if none.}}
+- Push policy: {{PUSH_POLICY: e.g. "push to main directly" or "PR required, branch
+  from develop".}}
+
+## Project conventions
+
+{{BULLETS: naming, structure, or workflow rules an agent must follow here that are
+not derivable from the code - or a pointer to where they live (e.g. .claude/rules/).
+Delete the section if the code speaks for itself.}}
