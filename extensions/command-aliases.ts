@@ -28,10 +28,11 @@ export default function commandAliases(pi: ExtensionAPI) {
 	pi.registerCommand("clear", {
 		description: "Start a new session (clear)",
 		handler: async (_args, ctx) => {
-			const result = await ctx.newSession();
-			if (!result.cancelled) {
-				ctx.ui.notify("New session started", "info");
-			}
+			await ctx.newSession({
+				withSession: async (ctx) => {
+					ctx.ui.notify("New session started", "info");
+				},
+			});
 		},
 	});
 }
