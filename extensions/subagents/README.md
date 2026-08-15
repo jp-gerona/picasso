@@ -40,6 +40,11 @@ a standalone Node script the child runs with `bash`:
   `<script type="application/json">` is invisible to the default visible wait.
 - Clear any single-session state before the script logs in, or the app answers
   "Already Signed In" and the child reports a timeout as a product bug.
+- Do not drive the browser with `playwright-cli` (`@playwright/cli@0.1.18`, alpha).
+  `open` crashes with "Target crashed / Assertion error" in `_CRSession._onMessage`
+  with the bundled chromium, a pinned `executablePath`, and `--browser chrome`
+  alike, so the script pattern above is the working path. Revisit only when the
+  CLI ships a stable release.
 
 ## Modes
 
