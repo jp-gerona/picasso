@@ -18,6 +18,29 @@ Each dispatch spawns `pi -p` fresh:
 - `--tools`, `--model`, `--system-prompt` come from the agent config, with `--model`
   overridable per dispatch (see Model routing).
 
+## Browser / MCP work runs as a CLI script, not through the MCP
+
+Children get only the tools listed in their agent config - today that is bash,
+plus read/write/edit for implement. No child has an MCP or a browser tool, and Pi
+has no MCP server integration, so "drive it with the Playwright MCP" cannot be
+handed to a subagent. Do not wire an MCP for this. The token-efficient pattern is
+a standalone Node script the child runs with `bash`:
+
+- The main session writes the Playwright script (assertions, selectors, login)
+  into a scratch file and dispatches the child to run it and report the output.
+- Resolve `playwright` from the npx cache with `createRequire`, or run the script
+  via `npx playwright`. Do not `npm install` a second copy.
+- Pin `executablePath` to the already-installed browser. The npx-cached playwright
+  build and the cached chromium can drift versions: playwright 1.61.x asks for
+  chromium 1237 while the machine carries 1228, and the launch then fails with
+  "Executable doesn't exist". Pointing at the 1228 headless shell binary fixes it
+  without a large download.
+- Prefer `waitUntil: 'domcontentloaded'` and `waitForSelector(..., { state:
+  'attached' })`. Pages that live-poll never reach `networkidle`, and a hidden
+  `<script type="application/json">` is invisible to the default visible wait.
+- Clear any single-session state before the script logs in, or the app answers
+  "Already Signed In" and the child reports a timeout as a product bug.
+
 ## Modes
 
 - Single task: `{ agent, task, model? }`
