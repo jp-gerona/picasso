@@ -20,7 +20,9 @@ export type TemplateName = "commit" | "pr" | "issue";
 const EMPTY_DEFAULTS: Record<TemplateName, Record<string, string>> = {
   commit: {
     body: "No body: the header says everything this change does.",
-    footer: "No issue references.",
+    // Footer is the one exception to "never omit": when no issue is referenced
+    // the footer is omitted entirely rather than stating "No issue references."
+    footer: "",
   },
   pr: {
     summary: "None provided.",

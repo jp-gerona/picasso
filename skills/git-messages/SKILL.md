@@ -14,6 +14,8 @@ invented content, never skipped sections.
    output, the actual conversation. If you did not observe it, it does not go in.
 2. Never omit a section. A section with nothing to report states that explicitly
    ("Risk/Rollback: none identified"), because omission looks like an oversight.
+   The one exception is the commit footer: when no issue is referenced, the
+   footer is omitted entirely rather than stating "No issue references."
 3. Dash, not em dash, in all generated prose - no exceptions. Check the finished
    text for `—` before using it; this is exactly where em dashes sneak back in.
 4. No agent co-author lines, ever.
@@ -29,7 +31,7 @@ invented content, never skipped sections.
 
 <body>                           <- what changed and why, from the real diff
 
-<footer>                         <- issue refs (Closes #N) or "No issue references."
+<footer>                         <- issue refs (Closes #N); omit when none
 ```
 
 `type` is one of: feat, fix, refactor, docs, test, chore, perf, build. Read the
@@ -66,4 +68,5 @@ render("pr", { summary, changes, verification, risk });
 ```
 
 `render()` enforces the rules mechanically: missing fields get the explicit "none"
-line, em dashes are rewritten to dashes, structure comes from the template file.
+line (except the commit footer, which is omitted entirely when empty), em dashes
+are rewritten to dashes, structure comes from the template file.
