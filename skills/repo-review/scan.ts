@@ -1,7 +1,7 @@
 /**
- * repo-review scan script. Gathers facts about an external GitHub repo,
- * read-only. It never runs anything from the target repo: shallow clone and
- * text scanning only. The verdict is written by the reviewing agent, not here.
+ * scan - repo-review facts gatherer. Reads an external GitHub repo, read-only.
+ * It never runs anything from the target repo: shallow clone and text scanning
+ * only. The verdict is written by the reviewing agent, not here.
  *
  * Usage: node --experimental-strip-types scan.ts <owner>/<repo>
  * Output: references/<owner>-<repo>.md (relative to this script)

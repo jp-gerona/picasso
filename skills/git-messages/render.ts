@@ -1,6 +1,6 @@
 /**
- * Template renderer for git-messages. Used by the push-gate extension and any
- * other code that emits commit messages, PR bodies, or issue bodies.
+ * render - template renderer for git-messages. Used by the push-gate extension
+ * and any other code that emits commit messages, PR bodies, or issue bodies.
  *
  * Deterministic means: fixed structure from the template, every placeholder
  * always filled. A field with no real content gets an explicit "none" line

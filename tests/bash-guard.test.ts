@@ -1,3 +1,7 @@
+// bash-guard.test.ts - risk-tier assertions for bash-guard's assess(): every
+// destructive command must be critical, everyday git commands caution, and
+// safe-looking-but-harmless commands pass.
+//
 // Run: node --experimental-strip-types tests/bash-guard.test.ts
 import assert from "node:assert";
 import { assess } from "../extensions/bash-guard/index.ts";

@@ -1,3 +1,6 @@
+// git-messages.test.ts - render()/sanitize() contract: fixed section order,
+// explicit empty defaults, em-dash sanitization, and the footer omission rules.
+//
 // Run: node --experimental-strip-types tests/git-messages.test.ts
 import assert from "node:assert";
 import { render, sanitize } from "../skills/git-messages/render.ts";

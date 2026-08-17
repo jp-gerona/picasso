@@ -1,3 +1,7 @@
+// thinking.test.ts - /thinking extension behavior against a mock pi: command
+// registration, argument completion, supported-level filtering, and handler
+// flows (direct, invalid, selector, headless).
+//
 // Run: node --experimental-strip-types tests/thinking.test.ts
 import assert from "node:assert";
 import thinkingExtension, { getSupportedLevels } from "../extensions/thinking.ts";
@@ -38,7 +42,9 @@ function createMockCtx(overrides = {}) {
 	};
 }
 
-// --- registration -----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Registration
+// ---------------------------------------------------------------------------
 const pi = createMockPi();
 thinkingExtension(pi);
 assert.strictEqual(pi.commands.size, 1, "expected exactly one registered command");
@@ -49,7 +55,9 @@ assert.strictEqual(cmd.argumentHint, "<level>");
 assert.strictEqual(typeof cmd.handler, "function");
 assert.strictEqual(typeof cmd.getArgumentCompletions, "function");
 
-// --- autocomplete -----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Autocomplete
+// ---------------------------------------------------------------------------
 const allLevels = cmd.getArgumentCompletions("").map((item) => item.value);
 assert.deepStrictEqual(allLevels, ["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 const mediumMatches = cmd.getArgumentCompletions("me").map((item) => item.value);
@@ -57,7 +65,9 @@ assert.deepStrictEqual(mediumMatches, ["medium"], "prefix 'me' should suggest on
 assert.strictEqual(cmd.getArgumentCompletions("zz"), null, "no matches should return null");
 assert.ok(cmd.getArgumentCompletions("high")[0].description, "completion items should carry a description");
 
-// --- getSupportedLevels ------------------------------------------------------
+// ---------------------------------------------------------------------------
+// getSupportedLevels
+// ---------------------------------------------------------------------------
 assert.deepStrictEqual(getSupportedLevels(undefined), ["off", "minimal", "low", "medium", "high"]);
 assert.deepStrictEqual(getSupportedLevels({ reasoning: false }), ["off"]);
 // xhigh/max require an explicit thinkingLevelMap entry (mirrors pi-ai behavior)
@@ -68,7 +78,9 @@ assert.deepStrictEqual(
 	"xhigh with null mapping should be excluded, max with mapping included",
 );
 
-// --- handler: direct argument ------------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: direct argument
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -80,7 +92,9 @@ assert.deepStrictEqual(
 	assert.deepStrictEqual(ctx.notify.at(-1), { message: "Thinking level: high", type: "info" });
 }
 
-// --- handler: case-insensitive argument --------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: case-insensitive argument
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -90,7 +104,9 @@ assert.deepStrictEqual(
 	assert.strictEqual(p.calls.at(-1).level, "medium");
 }
 
-// --- handler: invalid argument ------------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: invalid argument
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -103,7 +119,9 @@ assert.deepStrictEqual(
 	assert.match(ctx.notify.at(-1).message, /off, minimal, low, medium, high/);
 }
 
-// --- handler: non-thinking model ----------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: non-thinking model
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -120,7 +138,9 @@ assert.deepStrictEqual(
 	assert.strictEqual(p.calls.at(-1).level, "off");
 }
 
-// --- handler: selector flow ----------------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: selector flow
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -135,7 +155,9 @@ assert.deepStrictEqual(
 	assert.strictEqual(p.calls.at(-1).level, "medium", "selector selection should set the level");
 }
 
-// --- handler: selector cancel --------------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: selector cancel
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);
@@ -145,7 +167,9 @@ assert.deepStrictEqual(
 	assert.ok(!p.calls.some((c) => c.type === "set"), "cancelling the selector should not change the level");
 }
 
-// --- handler: no UI --------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Handler: no UI
+// ---------------------------------------------------------------------------
 {
 	const p = createMockPi();
 	thinkingExtension(p);

@@ -69,6 +69,9 @@ async function runOne(
 }
 
 async function runPool<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>): Promise<R[]> {
+  // Fixed lane pool: each lane pulls the next index via next++, so concurrency
+  // never exceeds `limit` and a lane that finishes early picks up the next
+  // item instead of idling. Results land at their original index.
   const results: R[] = new Array(items.length);
   let next = 0;
   const lanes = Array.from({ length: Math.min(limit, items.length) }, async () => {

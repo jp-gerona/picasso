@@ -1,5 +1,5 @@
 /**
- * Child-process argument construction for the subagents extension.
+ * args - child-process argument construction for the subagents extension.
  *
  * Pure and dependency-free so it can be unit-tested without pi or typebox.
  * buildChildArgs produces the exact `pi -p` invocation a dispatch runs, with

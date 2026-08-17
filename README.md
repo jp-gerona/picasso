@@ -18,6 +18,8 @@ review. Lives at `~/.pi/agent`.
 - `skills/`
   - `git-messages/` - fixed templates + renderer for commit messages, PR bodies,
     issue bodies; no invented content, no omitted sections, dash not em dash.
+  - `comment-style/` - deterministic comment pattern (placement, form, substance),
+    adapted to project rules and native language doc syntax.
   - `repo-review/` - read-only external repo inspection (shallow-clone and grep
     only, never execute); review outputs in `references/`.
   - `retro/` - `/retro` (explicit only): session lessons as real diffs, applied

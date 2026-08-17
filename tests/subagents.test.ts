@@ -1,3 +1,7 @@
+// subagents.test.ts - buildChildArgs contract: an explicit model override wins
+// over the agent's configured model, sandbox flags are always present, tools
+// are comma-joined, and only bash-guard is loaded.
+//
 // Run: node --experimental-strip-types tests/subagents.test.ts
 import assert from "node:assert";
 import { buildChildArgs } from "../extensions/subagents/args.ts";
