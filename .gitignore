@@ -37,3 +37,6 @@ tmp/
 # Generated review outputs - keep the curated checklist only
 skills/repo-review/references/*.md
 !skills/repo-review/references/checklist.md
+
+# Fetched web content / research artifacts - local only
+references/
