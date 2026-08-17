@@ -4,7 +4,7 @@
  * only. The verdict is written by the reviewing agent, not here.
  *
  * Usage: node --experimental-strip-types scan.ts <owner>/<repo>
- * Output: references/<owner>-<repo>.md (relative to this script)
+ * Output: <agent-root>/references/repo-review/<owner>-<repo>.md
  */
 
 import fs from "node:fs";
@@ -127,7 +127,9 @@ try {
     ),
   ].join("\n");
 
-  const outPath = path.join(HERE, "references", `${owner}-${repo}.md`);
+  // HERE is .../skills/repo-review. The shared gitignored output drawer lives at
+  // <agent-root>/references/repo-review/, two levels up from the skill folder.
+  const outPath = path.join(HERE, "..", "..", "references", "repo-review", `${owner}-${repo}.md`);
   fs.writeFileSync(outPath, report + "\n");
   console.error(`wrote ${outPath}`);
 } finally {
