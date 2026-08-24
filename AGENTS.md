@@ -18,6 +18,7 @@ Standing rules for every agent session, regardless of task or project.
 - `node --experimental-strip-types tests/bash-guard.test.ts`
 - `node --experimental-strip-types tests/git-messages.test.ts`
 - `node --experimental-strip-types tests/subagents.test.ts`
+- settings.json is untracked runtime state; mirror durable changes into settings.example.json
 
 ## Skills and Extensions
 

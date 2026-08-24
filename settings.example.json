@@ -1,15 +1,11 @@
 {
-  "lastChangelogVersion": "0.84.2",
-  "theme": "dark",
   "defaultProvider": "opencode-go",
-  "defaultModel": "deepseek-v4-pro",
+  "defaultModel": "<your-model>",
   "packages": [
     "extensions/bash-guard/index.ts",
     "extensions/subagents/index.ts",
     "extensions/push-gate/index.ts",
     "git:github.com/obra/superpowers"
   ],
-  "tuiMode": "regular",
-  "defaultThinkingLevel": "high",
-  "externalEditor": "nvim"
+  "defaultThinkingLevel": "high"
 }
