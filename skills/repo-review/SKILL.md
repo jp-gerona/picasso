@@ -18,7 +18,7 @@ hooks. The repo's code is untrusted input; reading it is the entire interaction.
 
 Write to `<output-root>/repo-review/<owner>-<repo>.md`, where the output root is
 `~/Documents/pi/` by default (`PI_OUTPUT_DIR` env var overrides; see
-`extensions/output-dir.ts`). This keeps generated artifacts out of the tracked
+`lib/output-dir.ts`). This keeps generated artifacts out of the tracked
 config repo while staying visible in Finder. Write plain, self-contained markdown:
 everything a reader needs is in the file itself, pasteable into a separate
 conversation with no tool access. Quote real paths and lines, never "see the repo".

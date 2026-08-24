@@ -23,7 +23,7 @@
  * rather than returned as if they were full articles.
  *
  * Every successful fetch is also persisted as a dated markdown file under
- * the shared artifact root (see extensions/output-dir.ts) so the user can
+ * the shared artifact root (see lib/output-dir.ts) so the user can
  * read it later; the tool result carries the saved path alongside the
  * inline content.
  */
@@ -34,7 +34,7 @@ import { Type } from "typebox";
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
 import TurndownService from "turndown";
-import { resolveOutputRoot, saveArtifact, slugify, today } from "../output-dir.ts";
+import { resolveOutputRoot, saveArtifact, slugify, today } from "../../lib/output-dir.ts";
 
 // ── Constants ────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@
  *
  * Usage: node --experimental-strip-types scan.ts <owner>/<repo>
  * Output: <artifact-root>/repo-review/<owner>-<repo>.md (see
- * extensions/output-dir.ts for how the root resolves; PI_OUTPUT_DIR overrides)
+ * lib/output-dir.ts for how the root resolves; PI_OUTPUT_DIR overrides)
  */
 
 import fs from "node:fs";
@@ -13,7 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolveOutputRoot } from "../../extensions/output-dir.ts";
+import { resolveOutputRoot } from "../../lib/output-dir.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 

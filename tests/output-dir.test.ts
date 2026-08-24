@@ -6,7 +6,7 @@ import assert from "node:assert";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { resolveOutputRoot, saveArtifact } from "../extensions/output-dir.ts";
+import { resolveOutputRoot, saveArtifact } from "../lib/output-dir.ts";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "output-dir-test-"));
 

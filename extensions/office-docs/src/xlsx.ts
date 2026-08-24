@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { basename, resolve, relative, isAbsolute, sep } from "node:path";
 import { Type } from "typebox";
-import { resolveOutputRoot, saveArtifact, slugify, today } from "../../output-dir.ts";
+import { resolveOutputRoot, saveArtifact, slugify, today } from "../../../lib/output-dir.ts";
 
 /**
  * Resolve a path against cwd and guard against escapes.
