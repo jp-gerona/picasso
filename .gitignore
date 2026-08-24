@@ -33,10 +33,3 @@ __pycache__/
 Thumbs.db
 tmp/
 *.log
-
-
-# Agent-produced research output - fetched content, repo-review notes,
-# future feature output. Local only; never ship in the config repo.
-# repo-review's curated checklist.md lives at skills/repo-review/ and
-# ships tracked, outside this drawer.
-references/

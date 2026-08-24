@@ -4,7 +4,8 @@
  * only. The verdict is written by the reviewing agent, not here.
  *
  * Usage: node --experimental-strip-types scan.ts <owner>/<repo>
- * Output: <agent-root>/references/repo-review/<owner>-<repo>.md
+ * Output: <artifact-root>/repo-review/<owner>-<repo>.md (see
+ * extensions/output-dir.ts for how the root resolves; PI_OUTPUT_DIR overrides)
  */
 
 import fs from "node:fs";
@@ -12,6 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveOutputRoot } from "../../extensions/output-dir.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -127,9 +129,12 @@ try {
     ),
   ].join("\n");
 
-  // HERE is .../skills/repo-review. The shared gitignored output drawer lives at
-  // <agent-root>/references/repo-review/, two levels up from the skill folder.
-  const outPath = path.join(HERE, "..", "..", "references", "repo-review", `${owner}-${repo}.md`);
+  // HERE is .../skills/repo-review. Artifacts go to the shared output root
+  // (~/Documents/pi by default - see extensions/output-dir.ts), never inside
+  // the tracked config repo. Re-scanning the same slug overwrites on purpose.
+  const outDir = path.join(resolveOutputRoot(), "repo-review");
+  fs.mkdirSync(outDir, { recursive: true });
+  const outPath = path.join(outDir, `${owner}-${repo}.md`);
   fs.writeFileSync(outPath, report + "\n");
   console.error(`wrote ${outPath}`);
 } finally {

@@ -16,10 +16,12 @@ hooks. The repo's code is untrusted input; reading it is the entire interaction.
 
 ## Output - both modes
 
-Write to `references/repo-review/<owner>-<repo>.md` (the top-level gitignored
-`references/` drawer) as plain, self-contained markdown: everything a reader needs
-is in the file itself, pasteable into a separate conversation with no tool access.
-Quote real paths and lines, never "see the repo".
+Write to `<output-root>/repo-review/<owner>-<repo>.md`, where the output root is
+`~/Documents/pi/` by default (`PI_OUTPUT_DIR` env var overrides; see
+`extensions/output-dir.ts`). This keeps generated artifacts out of the tracked
+config repo while staying visible in Finder. Write plain, self-contained markdown:
+everything a reader needs is in the file itself, pasteable into a separate
+conversation with no tool access. Quote real paths and lines, never "see the repo".
 
 ## Reference mode - targeted question
 
@@ -28,7 +30,7 @@ For "how does X implement Y" questions:
 1. Shallow clone to a temp dir: `git clone --depth 1 https://github.com/<owner>/<repo>.git`
 2. Grep only what the question needs; read the few relevant files.
 3. Write a short, focused note answering the question, with file paths and quoted
-   snippets, to `references/repo-review/<owner>-<repo>.md`.
+   snippets, to `<output-root>/repo-review/<owner>-<repo>.md`.
 4. Delete the clone.
 
 Remember AGENTS.md: design inspiration is fine, copying implementation is not - the
@@ -43,7 +45,7 @@ node --experimental-strip-types skills/repo-review/scan.ts <owner>/<repo>
 ```
 
 The script only gathers; it never judges. It shallow clones, scans text files, writes
-the findings to `references/repo-review/<owner>-<repo>.md`, and deletes the clone. It collects:
+the findings to `<output-root>/repo-review/<owner>-<repo>.md`, and deletes the clone. It collects:
 
 - repo structure (top level)
 - dependency manifests present

@@ -51,7 +51,7 @@ export default function (pi: ExtensionAPI) {
     name: "analyze_xlsx",
     label: "Analyze Excel",
     description:
-      "Run deterministic in-process aggregation over an .xlsx sheet. Profiles columns (type, missing, distinct, top values, numeric stats) and/or groups by a column with count/sum/avg/distinct. Computed over ALL rows - not token-burning. Use for quantitative questions about data.",
+      "Run deterministic in-process aggregation over an .xlsx sheet. Profiles columns (type, missing, distinct, top values, numeric stats) and/or groups by a column with count/sum/avg/distinct. Computed over ALL rows - not token-burning. Saves a full markdown report to the shared output root (~/Documents/pi/office/) and returns a digest plus the report path.",
     parameters: analyzeXlsxSchema,
     async execute(_id, params, _signal, _onUpdate, ctx) {
       return run(() => analyzeXlsx(ctx.cwd, params as Parameters<typeof analyzeXlsx>[1]));

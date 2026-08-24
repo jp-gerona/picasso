@@ -21,6 +21,11 @@
  * responses are capped at MAX_RESPONSE_SIZE bytes. Pages whose extracted
  * markdown is below MIN_USEFUL_CONTENT chars are reported as incomplete
  * rather than returned as if they were full articles.
+ *
+ * Every successful fetch is also persisted as a dated markdown file under
+ * the shared artifact root (see extensions/output-dir.ts) so the user can
+ * read it later; the tool result carries the saved path alongside the
+ * inline content.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -29,6 +34,7 @@ import { Type } from "typebox";
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
 import TurndownService from "turndown";
+import { resolveOutputRoot, saveArtifact, slugify, today } from "../output-dir.ts";
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -332,12 +338,29 @@ export default function (pi: ExtensionAPI) {
 			const header = result.title
 				? `# ${result.title}\n\nSource: ${result.url}\n\n---\n\n`
 				: `Source: ${result.url}\n\n---\n\n`;
+
+			// Persist every successful fetch for later reading.
+			let savedPath: string | null = null;
+			try {
+				const slugSource = result.title || new URL(params.url).hostname;
+				savedPath = saveArtifact(
+					resolveOutputRoot(),
+					"web-fetch",
+					`${today()}-${slugify(String(slugSource))}`,
+					header + result.content,
+				);
+			} catch {
+				// Saving is best-effort; the fetch itself already succeeded.
+			}
+
+			const footer = savedPath ? `\n\n---\n\n*Saved to \`${savedPath}\`*` : "";
 			return {
-				content: [{ type: "text" as const, text: header + result.content }],
+				content: [{ type: "text" as const, text: header + result.content + footer }],
 				details: {
 					url: result.url,
 					title: result.title,
 					chars: result.content.length,
+					savedPath,
 				},
 			};
 		},
@@ -373,7 +396,7 @@ export default function (pi: ExtensionAPI) {
 			const firstText = result.content.find((c) => c.type === "text");
 			// An errored tool result arrives as a thrown Error surfaced by
 			// pi as a single text content block; surface it directly.
-			const details = result.details as { title?: string; chars?: number } | undefined;
+			const details = result.details as { title?: string; chars?: number; savedPath?: string | null } | undefined;
 			if (!details) {
 				const msg = firstText?.text ?? "Error";
 				return new Text(theme.fg("error", msg), 0, 0);
@@ -381,9 +404,11 @@ export default function (pi: ExtensionAPI) {
 
 			const title = details.title || "Untitled";
 			const chars = details.chars ?? 0;
+			const saved = details.savedPath ? theme.fg("muted", " → saved") : "";
 			const status =
 				theme.fg("success", title) +
-				theme.fg("muted", ` (${chars} chars)`);
+				theme.fg("muted", ` (${chars} chars)`) +
+				saved;
 
 			if (!expanded) {
 				return new Text(status, 0, 0);

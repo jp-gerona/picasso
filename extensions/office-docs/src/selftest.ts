@@ -14,6 +14,9 @@ import {
 } from "./docx.ts";
 
 const cwd = mkdtempSync(join(tmpdir(), "office-docs-selftest-"));
+// Route analysis artifacts to a throwaway root so the selftest never
+// writes into ~/Documents.
+process.env.PI_OUTPUT_DIR = join(cwd, "out");
 let pass = 0;
 let fail = 0;
 const ok = (name: string, cond: boolean, extra = "") => {
@@ -53,7 +56,10 @@ const afterUpdate = await readXlsx(cwd, { path: xlsxPath, maxRows: "all" });
 ok("update_xlsx writes new cell", afterUpdate.includes("Carol"));
 
 const profile = await analyzeXlsx(cwd, { path: xlsxPath, sheet: "Data", profile: true });
-ok("analyze_xlsx profile returns column stats", profile.includes("Distinct") && profile.includes("categorical"));
+ok("analyze_xlsx returns digest with saved path", /saved to/.test(profile) && !profile.includes("| Column |"));
+const savedReport = readFileSync(profile.match(/saved to (\S+)/)?.[1] ?? "missing", "utf8");
+ok("analyze_xlsx saved report has column stats", savedReport.includes("Distinct") && savedReport.includes("categorical"));
+ok("analyze_xlsx report is self-contained", savedReport.includes("How to read this") && savedReport.includes(xlsxPath));
 
 const grouped = await analyzeXlsx(cwd, {
   path: xlsxPath,
@@ -61,7 +67,9 @@ const grouped = await analyzeXlsx(cwd, {
   groupBy: "Name",
   agg: "count",
 });
-ok("analyze_xlsx groupBy count works", grouped.includes("Alice") && grouped.includes("| 1 |"));
+const groupedPath = grouped.match(/saved to (\S+)/)?.[1] ?? "missing";
+const groupedReport = readFileSync(groupedPath, "utf8");
+ok("analyze_xlsx groupBy count works", groupedReport.includes("Alice") && groupedReport.includes("| 1 |"));
 
 console.log("\n=== DOCX round-trip ===");
 const docxPath = "test.docx";

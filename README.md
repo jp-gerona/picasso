@@ -21,7 +21,11 @@ review. Lives at `~/.pi/agent`.
   - `comment-style/` - deterministic comment pattern (placement, form, substance),
     adapted to project rules and native language doc syntax.
   - `repo-review/` - read-only external repo inspection (shallow-clone and grep
-    only, never execute); review outputs in `references/`.
+    only, never execute); review outputs in the shared artifact root.
+- `output-dir.ts` - shared artifact output root resolver: `PI_OUTPUT_DIR`, else
+  `~/Documents/pi/` when a Documents folder exists, else `~/.pi/output/`. All
+  extension/skill artifacts (web fetches, xlsx analyses, repo reviews) are
+  written here as dated, self-contained markdown - never inside this repo.
   - `retro/` - `/retro` (explicit only): session lessons as real diffs, applied
     only on accept.
 - `prompts/` - slash-command prompt templates (`/retro`).

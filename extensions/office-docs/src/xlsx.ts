@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
-import { resolve, relative, isAbsolute, sep } from "node:path";
+import { basename, resolve, relative, isAbsolute, sep } from "node:path";
 import { Type } from "typebox";
+import { resolveOutputRoot, saveArtifact, slugify, today } from "../../output-dir.ts";
 
 /**
  * Resolve a path against cwd and guard against escapes.
@@ -270,6 +271,50 @@ export async function analyzeXlsx(
   const totalDataRows = Math.max(0, ws.rowCount - headerRows);
   const topN = params.topN ?? 10;
 
+  /**
+   * Wrap the raw analysis tables into a self-contained learning artifact,
+   * persist it under the shared output root, and return a short digest plus
+   * the saved path so tool results stay token-cheap.
+   */
+  const finish = (report: string): string => {
+    const name = `${basename(abs)} - ${ws.name}`;
+    const artifact = [
+      `# Analysis: ${name}`,
+      "",
+      `Deterministic aggregation over all ${totalDataRows} data rows (${filtered.length} after filter). Generated ${today()}.`,
+      `Source workbook: ${abs}`,
+      "",
+      "---",
+      "",
+      report,
+      "",
+      "---",
+      "",
+      "How to read this: every figure above is computed in-process over ALL rows of the sheet,",
+      "never sampled, so counts and sums are exact. Column profiles show each column's type,",
+      "missing-value count, number of distinct values, most frequent values, and - for numeric",
+      "columns - min/max/mean/sum.",
+    ].join("\n");
+    let savedPath: string | null = null;
+    try {
+      savedPath = saveArtifact(
+        resolveOutputRoot(),
+        "office",
+        `${today()}-${slugify(name)}`,
+        artifact,
+      );
+    } catch {
+      // Persisting is best-effort; the analysis itself already succeeded.
+    }
+    const what = params.groupBy !== undefined ? "group-by aggregation" : "column profiles";
+    const lines = [
+      `Analyzed ${name}: ${totalDataRows} data rows (${filtered.length} after filter); ${what} computed over all rows.`,
+    ];
+    if (savedPath) lines.push(`Full report saved to ${savedPath} (read it for the complete tables).`);
+    else lines.push("Report could not be saved to disk; full tables follow.", "", report);
+    return lines.join("\n");
+  };
+
   // Resolve a column reference (name or 1-based index) to a 0-based index.
   const resolveCol = (ref: string | number): number => {
     if (typeof ref === "number") return ref - 1;
@@ -357,7 +402,7 @@ export async function analyzeXlsx(
       parts.push(`| ${esc(key)} | ${val} |`);
     }
     parts.push("");
-    return parts.join("\n");
+    return finish(parts.join("\n"));
   }
 
   // Column profiles.
@@ -401,7 +446,7 @@ export async function analyzeXlsx(
     parts.push("");
   }
 
-  return parts.join("\n");
+  return finish(parts.join("\n"));
 }
 
 export async function writeXlsx(
