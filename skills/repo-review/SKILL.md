@@ -29,9 +29,14 @@ For "how does X implement Y" questions:
 
 1. Shallow clone to a temp dir: `git clone --depth 1 https://github.com/<owner>/<repo>.git`
 2. Grep only what the question needs; read the few relevant files.
-3. Write a short, focused note answering the question, with file paths and quoted
-   snippets, to `<output-root>/repo-review/<owner>-<repo>.md`.
-4. Delete the clone.
+3. Write the note, with file paths and quoted snippets, to
+   `<output-root>/repo-review/<owner>-<repo>.md`. Answer the literal question,
+   but cover the mechanism chain around it: the stack, where the data comes
+   from and how it is acquired/updated, how the key visuals are actually
+   rendered (geometry source, layering), and any plugin/extension surface.
+   Follow-up questions almost always probe one of these gaps.
+4. Keep the clone until the session's questions on this repo are done -
+   follow-ups must not re-clone. Delete it when the user moves on.
 
 Remember AGENTS.md: design inspiration is fine, copying implementation is not - the
 note records how they solved it, not code to paste.
