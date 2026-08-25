@@ -1,17 +1,8 @@
 import mammoth from "mammoth";
 import { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } from "docx";
 import { writeFileSync, readFileSync } from "node:fs";
-import { resolve, relative, isAbsolute } from "node:path";
 import { Type } from "typebox";
-
-function safePath(cwd: string, raw: string): string {
-  const base = isAbsolute(raw) ? raw : resolve(cwd, raw);
-  const rel = relative(cwd, base);
-  if (rel.startsWith("..") || isAbsolute(rel)) {
-    throw new Error(`Path escapes cwd: ${raw}`);
-  }
-  return base;
-}
+import { safePath } from "../../../lib/safe-path.ts";
 
 /** Parse a markdown string into docx block elements (paragraphs, headings, tables). */
 function mdToBlocks(md: string): (Paragraph | Table)[] {

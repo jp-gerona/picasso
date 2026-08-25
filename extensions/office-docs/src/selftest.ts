@@ -56,8 +56,10 @@ const afterUpdate = await readXlsx(cwd, { path: xlsxPath, maxRows: "all" });
 ok("update_xlsx writes new cell", afterUpdate.includes("Carol"));
 
 const profile = await analyzeXlsx(cwd, { path: xlsxPath, sheet: "Data", profile: true });
-ok("analyze_xlsx returns digest with saved path", /saved to/.test(profile) && !profile.includes("| Column |"));
-const savedReport = readFileSync(profile.match(/saved to (\S+)/)?.[1] ?? "missing", "utf8");
+ok("analyze_xlsx digest says saved (first call)", /Report saved to /.test(profile));
+ok("analyze_xlsx digest stays compact", !profile.includes("| Column |"));
+const profilePath = profile.match(/saved to (\S+\.md)/)?.[1] ?? "missing";
+const savedReport = readFileSync(profilePath, "utf8");
 ok("analyze_xlsx saved report has column stats", savedReport.includes("Distinct") && savedReport.includes("categorical"));
 ok("analyze_xlsx report is self-contained", savedReport.includes("How to read this") && savedReport.includes(xlsxPath));
 
@@ -67,9 +69,23 @@ const grouped = await analyzeXlsx(cwd, {
   groupBy: "Name",
   agg: "count",
 });
-const groupedPath = grouped.match(/saved to (\S+)/)?.[1] ?? "missing";
+ok("analyze_xlsx digest says appended (second call)", /Report appended to /.test(grouped));
+const groupedPath = grouped.match(/appended to (\S+\.md)/)?.[1] ?? "missing";
+ok("analyze_xlsx consolidates calls into one file", groupedPath === profilePath,
+	`expected ${profilePath}, got ${groupedPath}`);
 const groupedReport = readFileSync(groupedPath, "utf8");
 ok("analyze_xlsx groupBy count works", groupedReport.includes("Alice") && groupedReport.includes("| 1 |"));
+ok("consolidated report retains the profile section", groupedReport.includes("Distinct") && groupedReport.includes("categorical"));
+ok("consolidated report header is not repeated", (groupedReport.match(/^# Analysis:/gm) || []).length === 1);
+
+const matched = await analyzeXlsx(cwd, {
+  path: xlsxPath,
+  sheet: "Data",
+  groupBy: "Name",
+  agg: "count",
+  filter: [{ column: "Name", op: "match", value: "^A" }],
+});
+ok("analyze_xlsx match filter narrows rows", /1 after filter/.test(matched));
 
 console.log("\n=== DOCX round-trip ===");
 const docxPath = "test.docx";

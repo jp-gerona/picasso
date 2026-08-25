@@ -13,6 +13,9 @@ Standing rules for every agent session, regardless of task or project.
 - Never hand-edit auto-generated files (e.g. CHANGELOG.md). Fix the generator or its input, not the output.
 - No change-narration comments ("added for", "changed to"). Git has history. Comments only for durable why: invariants, non-obvious external contracts.
 - If you notice a lint failure or flaky test while working on something else, fix it - don't leave it because it wasn't the assigned task.
+- Never install packages or tools (pip, npm, brew, etc.) without explicit approval; prefer installed extensions first and state the gap before reaching for a script.
+- Default to installed extensions and built-in tools first - map intent to the right tool without making the user name it; ad-hoc scripts are a last resort.
+- Only produce derived deliverables (docx, pdf, polished reports) when explicitly asked; analysis lives in chat plus the one machine-generated report.
 
 ## Verification
 

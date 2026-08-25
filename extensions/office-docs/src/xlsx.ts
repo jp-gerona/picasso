@@ -1,20 +1,8 @@
 import ExcelJS from "exceljs";
-import { basename, resolve, relative, isAbsolute, sep } from "node:path";
+import { basename } from "node:path";
 import { Type } from "typebox";
-import { resolveOutputRoot, saveArtifact, slugify, today } from "../../../lib/output-dir.ts";
-
-/**
- * Resolve a path against cwd and guard against escapes.
- * Returns an absolute path, or throws a descriptive error.
- */
-function safePath(cwd: string, raw: string): string {
-  const base = isAbsolute(raw) ? raw : resolve(cwd, raw);
-  const rel = relative(cwd, base);
-  if (rel.startsWith("..") || isAbsolute(rel)) {
-    throw new Error(`Path escapes cwd: ${raw}`);
-  }
-  return base;
-}
+import { resolveOutputRoot, appendArtifact, slugify, today } from "../../../lib/output-dir.ts";
+import { safePath } from "../../../lib/safe-path.ts";
 
 /** Convert a column number (1-based) to an Excel letter (1 -> "A"). */
 function colLetter(n: number): string {
@@ -272,46 +260,51 @@ export async function analyzeXlsx(
   const topN = params.topN ?? 10;
 
   /**
-   * Wrap the raw analysis tables into a self-contained learning artifact,
-   * persist it under the shared output root, and return a short digest plus
-   * the saved path so tool results stay token-cheap.
+   * Consolidate this call's results into a single per-workbook report under
+   * the shared output root, appending a section to an existing same-day file
+   * rather than minting a new timestamped file per call. Returns a short digest
+   * plus the saved path so tool results stay token-cheap.
    */
   const finish = (report: string): string => {
-    const name = `${basename(abs)} - ${ws.name}`;
-    const artifact = [
-      `# Analysis: ${name}`,
+    const section = report;
+    const header = [
+      `# Analysis: ${basename(abs)}`,
       "",
-      `Deterministic aggregation over all ${totalDataRows} data rows (${filtered.length} after filter). Generated ${today()}.`,
       `Source workbook: ${abs}`,
+      `Generated ${today()}. Profiles and group-bys for this workbook in one session append below.`,
       "",
       "---",
       "",
-      report,
-      "",
-      "---",
-      "",
-      "How to read this: every figure above is computed in-process over ALL rows of the sheet,",
-      "never sampled, so counts and sums are exact. Column profiles show each column's type,",
-      "missing-value count, number of distinct values, most frequent values, and - for numeric",
-      "columns - min/max/mean/sum.",
+      "How to read this: every figure in every section below is computed in-process over ALL rows of the sheet,",
+      "never sampled, so counts and sums are exact. Column profiles show each column's type, missing-value count,",
+      "number of distinct values, most frequent values, and - for numeric columns - min/max/mean/sum.",
     ].join("\n");
     let savedPath: string | null = null;
+    let created = false;
     try {
-      savedPath = saveArtifact(
+      const out = appendArtifact(
         resolveOutputRoot(),
         "office",
-        `${today()}-${slugify(name)}`,
-        artifact,
+        `${today()}-${slugify(basename(abs))}-analysis`,
+        section,
+        header,
       );
+      savedPath = out.path;
+      created = out.created;
     } catch {
       // Persisting is best-effort; the analysis itself already succeeded.
     }
     const what = params.groupBy !== undefined ? "group-by aggregation" : "column profiles";
     const lines = [
-      `Analyzed ${name}: ${totalDataRows} data rows (${filtered.length} after filter); ${what} computed over all rows.`,
+      `Analyzed ${basename(abs)} - ${ws.name}: ${totalDataRows} data rows (${filtered.length} after filter); ${what} computed over all rows.`,
     ];
-    if (savedPath) lines.push(`Full report saved to ${savedPath} (read it for the complete tables).`);
-    else lines.push("Report could not be saved to disk; full tables follow.", "", report);
+    if (savedPath) {
+      lines.push(created
+        ? `Report saved to ${savedPath}.`
+        : `Report appended to ${savedPath} (consolidated with earlier analyses of this workbook).`);
+    } else {
+      lines.push("Report could not be saved to disk; full tables follow.", "", report);
+    }
     return lines.join("\n");
   };
 
@@ -350,6 +343,14 @@ export async function analyzeXlsx(
             return toNum(v) != null && toNum(v)! < (toNum(f.value) ?? NaN);
           case "in":
             return Array.isArray(f.value) && f.value.some((x) => fmt(x) === fmt(v));
+          case "match": {
+            if (typeof f.value !== "string") return false;
+            try {
+              return new RegExp(f.value).test(fmt(v));
+            } catch {
+              return false;
+            }
+          }
           default:
             return true;
         }
@@ -557,7 +558,7 @@ export const analyzeXlsxSchema = Type.Object({
     Type.Array(
       Type.Object({
         column: Type.Union([Type.String(), Type.Number()]),
-        op: Type.Union([Type.Literal("eq"), Type.Literal("ne"), Type.Literal("gt"), Type.Literal("lt"), Type.Literal("in")]),
+        op: Type.Union([Type.Literal("eq"), Type.Literal("ne"), Type.Literal("gt"), Type.Literal("lt"), Type.Literal("in"), Type.Literal("match")]),
         value: Type.Any(),
       }),
     ),

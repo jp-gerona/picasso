@@ -11,7 +11,7 @@
  *   3. ~/.pi/output    (fallback when there is no Documents folder)
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -48,6 +48,33 @@ export function saveArtifact(
 	}
 	writeFileSync(file, content);
 	return file;
+}
+
+/**
+ * Append a section to a per-key artifact, writing the header only on first
+ * creation. Repeated calls with the same baseName reuse one file (appending a
+ * section each time) instead of minting a new timestamped file per call - the
+ * contract for consolidation-style tools like analyze_xlsx.
+ *
+ * Returns the absolute path written and whether this call created the file.
+ */
+export function appendArtifact(
+	root: string,
+	subdir: string,
+	baseName: string,
+	section: string,
+	header: string,
+	ext = ".md",
+): { path: string; created: boolean } {
+	const dir = path.join(root, subdir);
+	mkdirSync(dir, { recursive: true });
+	const file = path.join(dir, `${baseName}${ext}`);
+	if (existsSync(file)) {
+		appendFileSync(file, `\n\n---\n\n${section}`);
+		return { path: file, created: false };
+	}
+	writeFileSync(file, `${header}\n\n---\n\n${section}`);
+	return { path: file, created: true };
 }
 
 /** Reduce arbitrary text (a page title, a workbook name) to a filename-safe slug. */
