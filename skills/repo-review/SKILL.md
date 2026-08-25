@@ -37,6 +37,13 @@ For "how does X implement Y" questions:
    Follow-up questions almost always probe one of these gaps.
 4. Keep the clone until the session's questions on this repo are done -
    follow-ups must not re-clone. Delete it when the user moves on.
+5. Open the note with one Trust context line, gathered for free while reading:
+   license, last-commit age / maintenance signals seen in the tree, and whether
+   a review-mode scan verdict exists at `<output-root>/repo-review/`. Reading
+   is safe under the rules above, but the user may later adopt what the note
+   teaches - the note must not become a blind spot. If the user signals
+   adoption intent (installing, depending on, or running the repo), recommend
+   running review mode first.
 
 Remember AGENTS.md: design inspiration is fine, copying implementation is not - the
 note records how they solved it, not code to paste.
