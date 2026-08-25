@@ -32,10 +32,6 @@ async function run(
 }
 
 export default function (pi: ExtensionAPI) {
-  pi.on("session_start", async (_event, ctx) => {
-    ctx.ui.notify("office-docs extension loaded", "info");
-  });
-
   pi.registerTool({
     name: "read_xlsx",
     label: "Read Excel",

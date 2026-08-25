@@ -5,7 +5,8 @@
     "extensions/bash-guard/index.ts",
     "extensions/subagents/index.ts",
     "extensions/push-gate/index.ts",
-    "git:github.com/obra/superpowers"
+    "git:github.com/obra/superpowers",
+    "extensions/office-docs/index.ts"
   ],
   "defaultThinkingLevel": "high"
 }
