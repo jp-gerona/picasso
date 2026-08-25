@@ -30,20 +30,26 @@ For "how does X implement Y" questions:
 1. Shallow clone to a temp dir: `git clone --depth 1 https://github.com/<owner>/<repo>.git`
 2. Grep only what the question needs; read the few relevant files.
 3. Write the note, with file paths and quoted snippets, to
-   `<output-root>/repo-review/<owner>-<repo>.md`. Answer the literal question,
-   but cover the mechanism chain around it: the stack, where the data comes
-   from and how it is acquired/updated, how the key visuals are actually
-   rendered (geometry source, layering), and any plugin/extension surface.
-   Follow-up questions almost always probe one of these gaps.
+   `<output-root>/repo-review/<owner>-<repo>.md`, on a fixed skeleton so notes
+   stay comparable across repos:
+   - Header: repo URL, version, license, demo/site URL.
+   - Trust context line: gathered free while reading - license, last-commit
+     age / maintenance signals seen in the tree, and whether a review-mode
+     scan verdict exists in `<output-root>/repo-review/`. Reading is safe
+     under the rules above, but adoption is not; if the user signals adoption
+     intent (installing, depending on, running), recommend review mode first.
+   - Tech stack table.
+   - Closing "Takeaways for reference": transferable patterns a developer can
+     reuse when building similar features or following established patterns.
+   Between these anchors, sections are free-form and repo-specific: answer the
+   literal question and cover the mechanism chain around it - where data comes
+   from and how it is acquired/updated, how the key features/output are
+   actually produced, any plugin/extension surface. Include only sections that
+   earn their place for this repo; never filler for a domain it does not have
+   (a CLI has no data-pipeline section). Follow-up questions almost always
+   probe one of these gaps.
 4. Keep the clone until the session's questions on this repo are done -
    follow-ups must not re-clone. Delete it when the user moves on.
-5. Open the note with one Trust context line, gathered for free while reading:
-   license, last-commit age / maintenance signals seen in the tree, and whether
-   a review-mode scan verdict exists at `<output-root>/repo-review/`. Reading
-   is safe under the rules above, but the user may later adopt what the note
-   teaches - the note must not become a blind spot. If the user signals
-   adoption intent (installing, depending on, or running the repo), recommend
-   running review mode first.
 
 Remember AGENTS.md: design inspiration is fine, copying implementation is not - the
 note records how they solved it, not code to paste.
