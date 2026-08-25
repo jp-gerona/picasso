@@ -11,13 +11,12 @@ Standing rules for every agent session, regardless of task or project.
 - Never add the agent as a commit co-author.
 - Reproduce every bug end-to-end before fixing it, as close to how an end user would hit it as possible, so the fix targets the real problem rather than a guess.
 - Never hand-edit auto-generated files (e.g. CHANGELOG.md). Fix the generator or its input, not the output.
+- No change-narration comments ("added for", "changed to"). Git has history. Comments only for durable why: invariants, non-obvious external contracts.
 - If you notice a lint failure or flaky test while working on something else, fix it - don't leave it because it wasn't the assigned task.
 
 ## Verification
 
-- `node --experimental-strip-types tests/bash-guard.test.ts`
-- `node --experimental-strip-types tests/git-messages.test.ts`
-- `node --experimental-strip-types tests/subagents.test.ts`
+- Run the full test suite with `bin/test` (every `tests/*.test.ts`, fails fast).
 - settings.json is untracked runtime state; mirror durable changes into settings.example.json
 
 ## Skills and Extensions

@@ -13,7 +13,8 @@ mcp-cache.json
 mcp-npx-cache.json
 run-history.jsonl
 models-store.json
-bin/
+bin/*
+!bin/test
 session-manager-config.toml
 pi-crash.log
 

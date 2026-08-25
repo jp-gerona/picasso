@@ -30,13 +30,12 @@ review. Lives at `~/.pi/agent`.
     only on accept.
 - `prompts/` - slash-command prompt templates (`/retro`).
 - `templates/` - `AGENTS.md.template` for instantiating per-project agent files.
-- `tests/` - assertion suites; also the AGENTS.md verification commands.
+- `tests/` - assertion suites, run via `bin/test`.
 
 ## Verification
 
 ```
-node --experimental-strip-types tests/bash-guard.test.ts
-node --experimental-strip-types tests/git-messages.test.ts
+bin/test
 ```
 
 ## Notes

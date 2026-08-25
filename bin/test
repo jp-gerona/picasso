@@ -1,0 +1,9 @@
+#!/bin/bash
+# test - run every suite in tests/*.test.ts.
+# Fails fast on the first failing suite so its output stays adjacent to the error.
+set -e
+cd "$(dirname "$0")/.."
+for f in tests/*.test.ts; do
+  echo "== $f"
+  node --experimental-strip-types "$f"
+done
