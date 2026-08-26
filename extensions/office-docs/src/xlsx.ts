@@ -3,31 +3,7 @@ import { basename } from "node:path";
 import { Type } from "typebox";
 import { resolveOutputRoot, appendArtifact, slugify, today } from "../../../lib/output-dir.ts";
 import { safePath } from "../../../lib/safe-path.ts";
-
-/** Convert a column number (1-based) to an Excel letter (1 -> "A"). */
-function colLetter(n: number): string {
-  let s = "";
-  while (n > 0) {
-    const m = (n - 1) % 26;
-    s = String.fromCharCode(65 + m) + s;
-    n = Math.floor((n - 1) / 26);
-  }
-  return s;
-}
-
-/** Best-effort coercion of a cell value to a number. */
-function toNum(v: unknown): number | null {
-  if (typeof v === "number") return v;
-  if (typeof v === "string") {
-    // Strip currency, thousands separators, common suffixes.
-    const cleaned = v.replace(/[^0-9.\-]/g, "");
-    if (cleaned === "" || cleaned === "-") return null;
-    const n = Number(cleaned);
-    return Number.isFinite(n) ? n : null;
-  }
-  if (v instanceof Date) return v.getTime();
-  return null;
-}
+import { colLetter, toNum, esc } from "./shared.ts";
 
 /** Extract a formula's result or formula string from an exceljs cell value. */
 function formulaText(v: unknown): { result: unknown; formula: string | null } {
@@ -35,7 +11,16 @@ function formulaText(v: unknown): { result: unknown; formula: string | null } {
   const obj = v as Record<string, unknown>;
   if (typeof obj.formula === "string") return { result: obj.result, formula: obj.formula };
   if (typeof obj.sharedFormula === "string") return { result: obj.result, formula: null };
-  return { result: v, formula: null };
+  // exceljs rich text: { richText: [{ value: "..." }, ...] }.
+  if (Array.isArray(obj.richText)) {
+    const text = obj.richText
+      .map((r) => (r && typeof r === "object" && "value" in r ? String((r as Record<string, unknown>).value) : String(r)))
+      .join("");
+    return { result: text, formula: null };
+  }
+  // Unrecognized object shape (hyperlinks, errors, etc.). Never return v as
+  // result - that would make fmt recurse infinitely on this same object.
+  return { result: undefined, formula: null };
 }
 
 /** Format a cell value for markdown output (renders formula results, not raw objects). */
@@ -47,11 +32,6 @@ function fmt(v: unknown): string {
     return fmt(result);
   }
   return String(v);
-}
-
-/** Escape a cell for markdown table cells. */
-function esc(s: string): string {
-  return s.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
 
 /**
@@ -220,8 +200,9 @@ interface ProfileResult {
   numeric?: { min: number; max: number; mean: number; sum: number };
 }
 
-export async function analyzeXlsx(
-  cwd: string,
+export async function analyzeXlsxCore(
+  dataAbs: string,
+  labelPath: string,
   params: {
     path: string;
     sheet?: string | number;
@@ -233,9 +214,8 @@ export async function analyzeXlsx(
     topN?: number;
   },
 ): Promise<string> {
-  const abs = safePath(cwd, params.path);
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile(abs);
+  await wb.xlsx.readFile(dataAbs);
 
   let ws: ExcelJS.Worksheet;
   if (params.sheet !== undefined) {
@@ -268,9 +248,9 @@ export async function analyzeXlsx(
   const finish = (report: string): string => {
     const section = report;
     const header = [
-      `# Analysis: ${basename(abs)}`,
+      `# Analysis: ${basename(labelPath)}`,
       "",
-      `Source workbook: ${abs}`,
+      `Source workbook: ${labelPath}`,
       `Generated ${today()}. Profiles and group-bys for this workbook in one session append below.`,
       "",
       "---",
@@ -285,7 +265,7 @@ export async function analyzeXlsx(
       const out = appendArtifact(
         resolveOutputRoot(),
         "office",
-        `${today()}-${slugify(basename(abs))}-analysis`,
+        `${today()}-${slugify(basename(labelPath))}-analysis`,
         section,
         header,
       );
@@ -296,7 +276,7 @@ export async function analyzeXlsx(
     }
     const what = params.groupBy !== undefined ? "group-by aggregation" : "column profiles";
     const lines = [
-      `Analyzed ${basename(abs)} - ${ws.name}: ${totalDataRows} data rows (${filtered.length} after filter); ${what} computed over all rows.`,
+      `Analyzed ${basename(labelPath)} - ${ws.name}: ${totalDataRows} data rows (${filtered.length} after filter); ${what} computed over all rows.`,
     ];
     if (savedPath) {
       lines.push(created
@@ -448,6 +428,24 @@ export async function analyzeXlsx(
   }
 
   return finish(parts.join("\n"));
+}
+
+/** Resolve the user-supplied path via safePath, then delegate to the core. */
+export async function analyzeXlsx(
+  cwd: string,
+  params: {
+    path: string;
+    sheet?: string | number;
+    profile?: boolean;
+    groupBy?: string | number;
+    agg?: "count" | "sum" | "avg" | "distinct";
+    aggColumn?: string | number;
+    filter?: { column: string | number; op: "eq" | "ne" | "gt" | "lt" | "in"; value: unknown }[];
+    topN?: number;
+  },
+): Promise<string> {
+  const abs = safePath(cwd, params.path);
+  return analyzeXlsxCore(abs, abs, params);
 }
 
 export async function writeXlsx(
