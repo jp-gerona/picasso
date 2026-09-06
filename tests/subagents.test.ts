@@ -4,7 +4,7 @@
 //
 // Run: node --experimental-strip-types tests/subagents.test.ts
 import assert from "node:assert";
-import { buildChildArgs } from "../extensions/subagents/args.ts";
+import { buildChildArgs, childTimeoutMs } from "../extensions/subagents/args.ts";
 
 const agent = {
   name: "verify",
@@ -28,6 +28,12 @@ const agent = {
   const args = buildChildArgs(agent, "run the tests", "opencode-go/qwen3.8-max");
   assert.ok(args.includes("opencode-go/qwen3.8-max"), "uses override model");
   assert.ok(!args.includes("opencode-go/deepseek-v4-flash"), "agent model not used when override present");
+}
+
+// Timeout defaults to ten minutes and respects a bounded explicit duration.
+{
+  assert.strictEqual(childTimeoutMs(), 10 * 60 * 1000, "uses the default child timeout");
+  assert.strictEqual(childTimeoutMs(20 * 60), 20 * 60 * 1000, "uses the requested child timeout");
 }
 
 // Tool list is comma-joined for --tools.

@@ -27,6 +27,10 @@ export interface AgentConfig {
   systemPrompt: string;
 }
 
+export function childTimeoutMs(timeoutSeconds: number = 10 * 60): number {
+  return timeoutSeconds * 1000;
+}
+
 export function buildChildArgs(agent: AgentConfig, task: string, model?: string): string[] {
   return [
     "-p",

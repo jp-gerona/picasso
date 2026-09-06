@@ -22,6 +22,16 @@ Standing rules for every agent session, regardless of task or project.
 - Run the full test suite with `bin/test` (every `tests/*.test.ts`, fails fast).
 - settings.json is untracked runtime state; mirror durable changes into settings.example.json
 
+## Subagent Dispatch
+
+Before re-dispatching a failed child, classify the failure. Retry a provider or
+transport failure once at the same tier after a readiness probe. For a known
+long command, set the bounded child timeout or run only that deterministic
+command in the controller. Retry an empty or harness failure once on the same
+brief and model, then split the task or collect its artifacts. Escalate models
+only when the report identifies a reasoning, integration, or judgment blocker.
+Never escalate a model solely because a child timed out.
+
 ## Skills and Extensions
 
 Anything not covered above lives in `skills/` and `extensions/` - this file states standing rules, it does not enumerate capabilities.

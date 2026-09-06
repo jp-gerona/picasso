@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "opencode-go",
-  "defaultModel": "<your-model>",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
   "packages": [
     "extensions/bash-guard/index.ts",
     "extensions/subagents/index.ts",

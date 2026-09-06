@@ -16,13 +16,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { buildChildArgs, type AgentConfig } from "./args.ts";
+import { buildChildArgs, childTimeoutMs, type AgentConfig } from "./args.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const AGENTS_DIR = path.join(HERE, "agents");
 
 const MAX_CONCURRENCY = 4;
-const TASK_TIMEOUT_MS = 10 * 60 * 1000;
+const MIN_TASK_TIMEOUT_SECONDS = 60;
+const MAX_TASK_TIMEOUT_SECONDS = 30 * 60;
 
 function loadAgentConfigs(): Map<string, AgentConfig> {
   const configs = new Map<string, AgentConfig>();
@@ -56,11 +57,12 @@ async function runOne(
   task: string,
   cwd: string,
   signal: AbortSignal | undefined,
-  model?: string,
+  model: string | undefined,
+  timeoutMs: number,
 ): Promise<TaskResult> {
   const args = buildChildArgs(agent, task, model);
   try {
-    const result = await pi.exec("pi", args, { cwd, signal, timeout: TASK_TIMEOUT_MS });
+    const result = await pi.exec("pi", args, { cwd, signal, timeout: timeoutMs });
     const output = (result.stdout + (result.stderr ? `\n[stderr]\n${result.stderr}` : "")).trim();
     return { agent: agent.name, task, ok: result.code === 0, output: output || "(no output)" };
   } catch (err) {
@@ -96,32 +98,41 @@ export default function (pi: ExtensionAPI) {
       "from this session, so every task string must be fully self-contained (absolute " +
       "paths, complete instructions, success criteria). Single task: set agent+task. " +
       `Parallel: set tasks (max concurrency ${MAX_CONCURRENCY}). Agents: ${agentList || "(none configured)"}. ` +
-      "Route by model (cheapest capable model for the task): opencode-go/deepseek-v4-flash " +
-      "or opencode-go/gpt-5.6-luna for mechanical work, opencode-go/deepseek-v4-pro for " +
-      "standard work, opencode-go/kimi-k2.7-code or opencode-go/kimi-k3 for complex/" +
-      "multifile work, opencode-go/qwen3.8-max for the hardest work and final reviews. " +
-      "Omitted model uses the agent's configured default.",
+      "Route by model: openai-codex/gpt-5.6-luna or opencode-go/deepseek-v4-flash for " +
+      "mechanical work, openai-codex/gpt-5.6-terra for standard implementation and review, " +
+      "and openai-codex/gpt-5.6-sol for architecture, final review, or a reasoned escalation. " +
+      "DeepSeek Flash is the only OpenCode Go route. Omitted model uses the agent's configured default.",
     parameters: Type.Object({
       agent: Type.Optional(Type.String({ description: "Agent name for single-task mode" })),
       task: Type.Optional(Type.String({ description: "Task for single-task mode" })),
       model: Type.Optional(Type.String({ description: "Optional model override (provider/model-id) for single-task mode" })),
+      timeoutSeconds: Type.Optional(Type.Integer({
+        minimum: MIN_TASK_TIMEOUT_SECONDS,
+        maximum: MAX_TASK_TIMEOUT_SECONDS,
+        description: "Child timeout for a known bounded long-running task; defaults to 600 seconds",
+      })),
       tasks: Type.Optional(
         Type.Array(
           Type.Object({
             agent: Type.String(),
             task: Type.String(),
             model: Type.Optional(Type.String({ description: "Optional model override (provider/model-id) for this task" })),
+            timeoutSeconds: Type.Optional(Type.Integer({
+              minimum: MIN_TASK_TIMEOUT_SECONDS,
+              maximum: MAX_TASK_TIMEOUT_SECONDS,
+              description: "Child timeout for a known bounded long-running task; defaults to 600 seconds",
+            })),
           }),
           { description: "Independent tasks for parallel mode" },
         ),
       ),
     }),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
-      const jobs: Array<{ agent: string; task: string; model?: string }> =
+      const jobs: Array<{ agent: string; task: string; model?: string; timeoutSeconds?: number }> =
         params.tasks && params.tasks.length > 0
           ? params.tasks
           : params.agent && params.task
-            ? [{ agent: params.agent, task: params.task, model: params.model }]
+            ? [{ agent: params.agent, task: params.task, model: params.model, timeoutSeconds: params.timeoutSeconds }]
             : [];
       if (jobs.length === 0) {
         return {
@@ -145,7 +156,7 @@ export default function (pi: ExtensionAPI) {
 
       let done = 0;
       const results = await runPool(jobs, MAX_CONCURRENCY, async (job) => {
-        const r = await runOne(pi, agents.get(job.agent)!, job.task, ctx.cwd, signal, job.model);
+        const r = await runOne(pi, agents.get(job.agent)!, job.task, ctx.cwd, signal, job.model, childTimeoutMs(job.timeoutSeconds));
         done++;
         onUpdate?.({ content: [{ type: "text", text: `${done}/${jobs.length} finished` }] });
         return r;

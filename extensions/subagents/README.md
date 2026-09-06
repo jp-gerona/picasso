@@ -48,9 +48,16 @@ a standalone Node script the child runs with `bash`:
 
 ## Modes
 
-- Single task: `{ agent, task, model? }`
-- Parallel: `{ tasks: [{ agent, task, model? }, ...] }` - fixed worker pool, max
-  concurrency 4, results returned in input order. Per-task timeout 10 minutes.
+- Single task: `{ agent, task, model?, timeoutSeconds? }`
+- Parallel: `{ tasks: [{ agent, task, model?, timeoutSeconds? }, ...] }` - fixed
+  worker pool, max concurrency 4, results returned in input order.
+
+## Timeouts
+
+The default child timeout is 10 minutes. Set `timeoutSeconds` only for a known,
+bounded long-running command, from 60 through 1,800 seconds. A timeout is a
+capacity signal, not a model-quality signal: do not retry the same task on a
+more capable model just because its child process ran out of time.
 
 ## Model routing
 
@@ -59,13 +66,14 @@ use the agent's configured default. Pick the cheapest model that can do the job:
 
 | Tier | Model | Use for |
 |---|---|---|
-| Mechanical | `opencode-go/deepseek-v4-flash` or `opencode-go/gpt-5.6-luna` | 1-2 files, fully specified, transcription, test runs |
-| Standard | `opencode-go/deepseek-v4-pro` | multi-file integration with a clear spec |
-| Complex | `opencode-go/kimi-k2.7-code` or `opencode-go/kimi-k3` | multifile coordination, subtle logic |
-| Hardest / final review | `opencode-go/qwen3.8-max` or `opencode-go/kimi-k3` | architecture, whole-branch review, fix-loop escalation |
+| Mechanical | `openai-codex/gpt-5.6-luna` or `opencode-go/deepseek-v4-flash` | 1-2 files, fully specified, transcription, test runs |
+| Standard | `openai-codex/gpt-5.6-terra` | multi-file integration, debugging, and scoped review |
+| Hardest / final review | `openai-codex/gpt-5.6-sol` | architecture, whole-branch review, and fix-loop escalation |
 
 The main session (brainstorm/spec/plan + orchestration) runs on
-`opencode-go/qwen3.8-max`, set as the default model in `settings.json`.
+`openai-codex/gpt-5.6-terra`, set as the default model in `settings.json`.
+DeepSeek Flash is the only OpenCode Go route; do not select another OpenCode Go
+model unless the user changes this policy.
 
 ## Agent configs
 
@@ -104,5 +112,8 @@ pi -p --no-session --no-tools --model <provider/model> "Reply with exactly: ok"
 A config pointing at a dead model fails every dispatch at runtime with a provider
 error, not at load time.
 
-Known on this setup: `opencode-go` serves all ladder models; `github-copilot`
-only serves `gpt-4.1` (its other listed models return `model_not_supported`).
+Known on this setup: `openai-codex/gpt-5.6-sol`,
+`openai-codex/gpt-5.6-terra`, and `openai-codex/gpt-5.6-luna` passed readiness
+probes. The sole approved OpenCode Go model is `opencode-go/deepseek-v4-flash`.
+`github-copilot` only serves `gpt-4.1` (its other listed models return
+`model_not_supported`).
