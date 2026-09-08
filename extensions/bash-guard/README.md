@@ -59,6 +59,13 @@ escalate to the main session if the command is genuinely needed.
 - Pipe-to-shell fires only when the pipe's producer is a downloader, so
   `cat script.sh | bash` of a local file does not trip it, `curl ... | bash` does.
 
+## Herdr alerts
+
+When an interactive confirmation is open, bash-guard emits a `herdr:blocked` event with its risk category
+and reason. If Herdr's Pi integration is installed, it reports the pane as blocked and plays Herdr's
+configured request sound. The event is cleared when the dialog closes, whether the command is
+approved or declined. Without Herdr, the event has no effect.
+
 ## Declined-command memory
 
 When you decline a command interactively, its exact text is remembered for

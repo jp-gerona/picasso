@@ -303,6 +303,11 @@ export default function (pi: ExtensionAPI) {
       };
     }
 
+    pi.events.emit("herdr:blocked", {
+      active: true,
+      label: `bash-guard: ${finding.category}: ${finding.reason}`,
+    });
+
     // Pause the working spinner while the dialog is open. In regular TUI mode
     // the spinner re-renders every ~80ms, and each repaint writes to the
     // terminal and snaps the view back to the bottom, so the user cannot
@@ -317,6 +322,7 @@ export default function (pi: ExtensionAPI) {
     } finally {
       // Restore the default animated spinner for the rest of the turn.
       ctx.ui.setWorkingIndicator();
+      pi.events.emit("herdr:blocked", { active: false });
     }
 
     if (ok) return undefined;

@@ -4,7 +4,7 @@
 //
 // Run: node --experimental-strip-types tests/bash-guard.test.ts
 import assert from "node:assert";
-import { assess } from "../extensions/bash-guard/index.ts";
+import installBashGuard, { assess } from "../extensions/bash-guard/index.ts";
 
 const critical = [
   "rm -rf ./build",
@@ -29,4 +29,86 @@ for (const cmd of caution) {
 for (const cmd of pass) {
   assert.strictEqual(assess(cmd), null, `expected pass: ${cmd}`);
 }
+type HerdrEvent = {
+  name: string;
+  data: unknown;
+};
+
+function createInteractiveHarness(confirm: () => Promise<boolean>) {
+  const events: HerdrEvent[] = [];
+  let handler: ((event: any, ctx: any) => Promise<unknown>) | undefined;
+  const ctx = {
+    hasUI: true,
+    ui: {
+      confirm,
+      setWorkingIndicator() {},
+    },
+  };
+
+  installBashGuard({
+    on(_event: string, registeredHandler: (event: any, context: any) => Promise<unknown>) {
+      handler = registeredHandler;
+    },
+    events: {
+      emit(name: string, data: unknown) {
+        events.push({ name, data });
+      },
+    },
+  } as any);
+
+  assert.ok(handler, "bash-guard registers a tool call handler");
+  return {
+    events,
+    run(command: string) {
+      return handler!({ toolName: "bash", input: { command } }, ctx);
+    },
+  };
+}
+
+const promptHarness = createInteractiveHarness(async () => {
+  assert.deepStrictEqual(promptHarness.events, [
+    {
+      name: "herdr:blocked",
+      data: {
+        active: true,
+        label: "bash-guard: git: git status",
+      },
+    },
+  ]);
+  return true;
+});
+assert.strictEqual(await promptHarness.run("git status"), undefined);
+assert.deepStrictEqual(promptHarness.events, [
+  {
+    name: "herdr:blocked",
+    data: {
+      active: true,
+      label: "bash-guard: git: git status",
+    },
+  },
+  {
+    name: "herdr:blocked",
+    data: { active: false },
+  },
+]);
+
+const declineHarness = createInteractiveHarness(async () => false);
+assert.deepStrictEqual(await declineHarness.run("git status"), {
+  block: true,
+  reason: "bash-guard: user declined (git: git status).",
+});
+assert.deepStrictEqual(declineHarness.events, [
+  {
+    name: "herdr:blocked",
+    data: {
+      active: true,
+      label: "bash-guard: git: git status",
+    },
+  },
+  {
+    name: "herdr:blocked",
+    data: { active: false },
+  },
+]);
+
 console.log(`bash-guard: ${critical.length + caution.length + pass.length} assertions passed`);
