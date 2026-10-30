@@ -6,7 +6,7 @@ Refine the personal Pi workflow in `/Users/JP/.pi/agent` to preserve the main se
 
 ## Current status
 
-The workflow changes are implemented, integrated, independently reviewed, and verified. The user has now requested commit and push, including checking the pre-existing Herdr update and untracked runtime folder; publication is in progress. New sessions will receive the updated standing instructions; run `/reload` in an existing Pi session to register the new profiles and dispatch description. Review and handoff maintenance remain agent responsibilities rather than hard runtime enforcement.
+The workflow changes and generated Herdr v9 update are implemented, independently reviewed, verified, committed, and pushed to `origin/main`. The machine-local `install/` directory is preserved and ignored, not committed. No implementation or publication blocker remains. New sessions will receive the updated standing instructions; run `/reload` in an existing Pi session to register the new profiles and dispatch description. Review and handoff maintenance remain agent responsibilities rather than hard runtime enforcement.
 
 ## Accepted decisions
 
@@ -80,3 +80,11 @@ The integration checklist above is now resolved; it is retained as work history.
 - A real Unix-socket protocol smoke test exercised the actual Herdr `session_start` handler. All seven cases passed: POSIX absolute paths, Windows drive-absolute paths, Windows UNC paths, relative paths, drive-relative paths, missing paths, and throwing path getters. Invalid/unavailable paths fell back to the session ID. This tested Windows path syntax on the current host, not a Windows operating-system run.
 - A fresh independent Terra review approved the generated Herdr change and the additional ignore/handoff scope. The Herdr-managed source was not hand-edited.
 - `git fetch origin` succeeded. Before creating commits, `HEAD...origin/main` reported `0 0`: no remote-only or local-only commits to reconcile. Proceed with ordinary pushes, never force-push.
+
+### Commit and push - published implementation
+
+- Created `d064647` (`feat: refine delegated Pi workflows and session handoffs`) with policy, profile/runtime changes, regression tests, documentation, handoff, and `/install/` ignore rule.
+- Created `658f3cd` (`chore: update generated Herdr integration to v9`) containing only the existing generated Herdr source update.
+- Re-ran `bin/test` after both commits; all seven suites passed. `git push origin main` succeeded, advancing remote `main` from `e6bc1f5` to `658f3cd` without force.
+- After that push, `git status --short` was empty and `HEAD...origin/main` reported `0 0`. The implementation commits were published and synchronized.
+- This handoff status update is recorded after successful implementation publication and is committed separately. Git history and remote refs identify the latest handoff-only commit; there is no request to compact or remove prior work history.
