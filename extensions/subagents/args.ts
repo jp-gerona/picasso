@@ -2,20 +2,17 @@
  * args - child-process argument construction for the subagents extension.
  *
  * Pure and dependency-free so it can be unit-tested without pi or typebox.
- * buildChildArgs produces the exact `pi -p` invocation a dispatch runs, with
- * one difference from the fixed-config path: an explicit model override (the
- * `model` argument) wins over the agent's configured default model.
+ * Child processes receive only the trusted bash guard and, for the explicit
+ * web_fetch allowlist entry, the installed trusted web-fetch extension.
+ * An explicit model override wins over the agent's configured default model.
  */
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const BASH_GUARD = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "bash-guard",
-  "index.ts",
-);
+const EXTENSIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const BASH_GUARD = path.join(EXTENSIONS_DIR, "bash-guard", "index.ts");
+const WEB_FETCH = path.join(EXTENSIONS_DIR, "web-fetch", "index.ts");
 
 export interface AgentConfig {
   name: string;
@@ -32,6 +29,10 @@ export function childTimeoutMs(timeoutSeconds: number = 10 * 60): number {
 }
 
 export function buildChildArgs(agent: AgentConfig, task: string, model?: string): string[] {
+  const extensions = agent.tools.includes("web_fetch")
+    ? [BASH_GUARD, WEB_FETCH]
+    : [BASH_GUARD];
+
   return [
     "-p",
     "--mode", "text",
@@ -40,7 +41,7 @@ export function buildChildArgs(agent: AgentConfig, task: string, model?: string)
     "--no-skills",
     "--no-prompt-templates",
     "--no-extensions",
-    "-e", BASH_GUARD,
+    ...extensions.flatMap((extension) => ["-e", extension]),
     "--model", model ?? agent.model,
     "--tools", agent.tools.join(","),
     "--system-prompt", agent.systemPrompt,

@@ -7,8 +7,8 @@
  * must be fully self-contained.
  *
  * Agent configs are data: JSON files in ./agents/*.json next to this file.
- * Child processes load only the bash-guard extension (headless mode), never
- * this one, so subagents cannot recursively spawn subagents.
+ * Children load the trusted bash guard and, only for web_fetch, trusted
+ * web-fetch; they never load this extension, so subagents cannot recurse.
  */
 
 import fs from "node:fs";
@@ -94,14 +94,17 @@ export default function (pi: ExtensionAPI) {
     name: "subagent",
     label: "Subagent",
     description:
-      "Dispatch tasks to isolated child Pi agents. Each child starts with zero context " +
+      "Dispatch routine tasks to isolated child Pi agents. Each child starts with zero context " +
       "from this session, so every task string must be fully self-contained (absolute " +
       "paths, complete instructions, success criteria). Single task: set agent+task. " +
       `Parallel: set tasks (max concurrency ${MAX_CONCURRENCY}). Agents: ${agentList || "(none configured)"}. ` +
-      "Route by model: openai-codex/gpt-5.6-luna or opencode-go/deepseek-v4-flash for " +
-      "mechanical work, openai-codex/gpt-5.6-terra for standard implementation and review, " +
-      "and openai-codex/gpt-5.6-sol for architecture, final review, or a reasoned escalation. " +
-      "DeepSeek Flash is the only OpenCode Go route. Omitted model uses the agent's configured default.",
+      "Use investigate for bounded exploration; use specialist only for an explicitly user-requested " +
+      "named role. Arrange independent review through the parent after implementation. Route " +
+      "openai-codex/gpt-5.6-luna to bounded exploration, mechanical work, or small scoped review; " +
+      "openai-codex/gpt-5.6-terra to synthesis, implementation, or normal review; and " +
+      "openai-codex/gpt-5.6-sol to complex architecture, judgment, or deep review. Do not escalate a " +
+      "model solely because a task timed out. The approved opencode-go/deepseek-v4-flash override " +
+      "remains available; omitted model uses the agent's configured default.",
     parameters: Type.Object({
       agent: Type.Optional(Type.String({ description: "Agent name for single-task mode" })),
       task: Type.Optional(Type.String({ description: "Task for single-task mode" })),
